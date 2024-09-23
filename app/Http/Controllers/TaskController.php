@@ -124,16 +124,15 @@ class TaskController extends Controller
                 return response()->json(['message' => 'Tarefa não encontrada.'], 404);
             }
 
+            if ($request->status === 'Feitas' && $task->status !== 'Feitas') {
+                $task->completed_at = Carbon::now();
+            }
+
             $task->update([
                 'title' => $request->title,
                 'description' => $request->description,
                 'status' => $request->status,
             ]);
-
-            if ($request->status === 'Feitas') {
-                $task->completed_at = Carbon::now();
-                $task->save();
-            }
 
             return response()->json($task);
         } catch (\Exception $e) {
