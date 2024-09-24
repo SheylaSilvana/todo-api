@@ -8,7 +8,7 @@ class TestRegisterUserTest extends TestCase
     {
         $data = [
             'name' => 'Teste Usuário',
-            'email' => 'sheylasilvana19@gmail.com'
+            'email' => env('MAIL_USERNAME')
         ];
 
         // Faz a requisição POST para registrar um novo usuário

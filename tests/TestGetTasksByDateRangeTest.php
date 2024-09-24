@@ -9,8 +9,8 @@ class TestGetTasksByDateRangeTest extends TestCase
         // Autentica o usuário e obtém o token JWT
         $this->authenticate();
 
-        $startDate = '2024-09-20';
-        $endDate = '2024-09-23';
+        $startDate = '2024-09-24';
+        $endDate = '2024-09-24';
 
         // Faz a requisição GET para listar tarefas em um intervalo de datas
         $response = $this->get("/api/v1/tasks/date-range?start_date=$startDate&end_date=$endDate", $this->withToken());

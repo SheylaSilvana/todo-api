@@ -7,20 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class Task extends Model
 {
     // Permite a inserção de dados em massa (mass assignment)
-    protected $fillable = ['title', 'description', 'status', 'completed_at', 'user_id'];
+    protected $fillable = ['title', 'description', 'status', 'completed_at', 'user_id', 'google_event_id', 'start_date_time', 'end_date_time'];
 
     // Definição do status como enum
     protected $casts = [
         'status' => 'string',
         'completed_at' => 'datetime',
+        'start_date_time' => 'datetime',
+        'end_date_time' => 'datetime',
     ];
 
     // Definição dos estados possíveis para a tarefa
     const STATUS_OPTIONS = [
         'A Fazer',
-        'Em Progresso',
-        'Pausada',
-        'Cancelada',
         'Feitas',
     ];
 

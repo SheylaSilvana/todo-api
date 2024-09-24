@@ -21,6 +21,8 @@ class TestUpdateTaskTest extends TestCase
         $updatedData = [
             'title' => 'Tarefa Atualizada',
             'description' => 'Descrição atualizada',
+            'start_date_time' => '24/09/2024 03:00',
+            'end_date_time' => '25/09/2024 16:00',
             'status' => 'Feitas'
         ];
 
@@ -30,14 +32,23 @@ class TestUpdateTaskTest extends TestCase
         // Verifica se o status HTTP da resposta é 200
         $this->seeStatusCode(200);
 
+        // Verifica se o JSON retornado contém os dados atualizados
+        $this->seeJson([
+            'title' => $updatedData['title'],  // Alterado de $data para $updatedData
+            'description' => $updatedData['description']
+        ]);
+
+        // Verifica se os dados atualizados estão no banco de dados
+        $this->seeInDatabase('tasks', [
+            'id' => $task->id,
+            'title' => $updatedData['title'],
+            'description' => $updatedData['description'],
+            'status' => $updatedData['status'],
+            'user_id' => auth()->id()
+        ]);
+
         // Captura o conteúdo da resposta e exibe com var_dump
         $content = $response->response->getContent();
         var_dump($content);
-
-        // Verifica se o JSON retornado contém os dados atualizados
-        $this->seeJson($updatedData);
-
-        // Verifica se os dados atualizados estão no banco de dados
-        $this->seeInDatabase('tasks', $updatedData);
     }
 }

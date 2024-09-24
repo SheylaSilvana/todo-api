@@ -18,7 +18,7 @@ return [
     ],
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'sheylasilvana18@gmail.com'),
+        'address' => env('MAIL_FROM_ADDRESS', env('MAIL_USERNAME')),
         'name' => env('MAIL_FROM_NAME', 'To-Do List'),
     ],
 

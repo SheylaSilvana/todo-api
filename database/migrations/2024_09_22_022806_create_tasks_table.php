@@ -15,8 +15,11 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description')->nullable();
-            $table->enum('status', ['A Fazer', 'Em Progresso', 'Pausada', 'Cancelada', 'Feitas'])->default('A Fazer');
+            $table->enum('status', ['A Fazer', 'Feitas'])->default('A Fazer');
             $table->timestamp('completed_at')->nullable(); // Campo para armazenar o timestamp de conclusão
+            $table->string('google_event_id')->nullable(); // Adiciona o campo google_event_id
+            $table->timestamp('start_date_time')->nullable(); // Campo para data e hora de início do evento
+            $table->timestamp('end_date_time')->nullable(); // Campo para data e hora de término do evento
             $table->timestamps();
 
             // Adiciona a coluna 'user_id' como chave estrangeira

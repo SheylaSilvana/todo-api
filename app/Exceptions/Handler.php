@@ -76,11 +76,6 @@ class Handler extends ExceptionHandler
             return response()->json(['message' => 'Recurso não encontrado.'], 404);
         }
 
-        // Captura erro 500 - Erros internos
-        if ($exception instanceof \Exception) {
-            return response()->json(['message' => 'Erro interno do servidor.'], 500);
-        }
-
         return parent::render($request, $exception);
     }
 }

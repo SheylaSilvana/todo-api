@@ -25,8 +25,8 @@ abstract class TestCase extends BaseTestCase
 
         // Defina os dados de login em um único lugar
         $this->loginData = [
-            'email' => 'sheylasilvana19@gmail.com',
-            'password' => 'JNumX7ZdUD' // Certifique-se de que esta senha é válida para o usuário
+            'email' => env('MAIL_USERNAME'),
+            'password' => 'senha123' // Certifique-se de que esta senha é válida para o usuário
         ];
     }
 

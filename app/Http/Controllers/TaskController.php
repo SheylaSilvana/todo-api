@@ -7,6 +7,8 @@ use App\Models\Task;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Services\GoogleCalendarService;
+use App\Jobs\SendTaskNotification;
 
 class TaskController extends Controller
 {
@@ -26,12 +28,46 @@ class TaskController extends Controller
                 $query->where('status', $request->get('status'));
             }
 
+            // Filtro por múltiplos status
+            if ($request->has('statuses')) {
+                $statuses = explode(',', $request->get('statuses'));
+                $query->whereIn('status', $statuses);
+            }
+
+            // Filtro por descrição
+            if ($request->has('description')) {
+                $query->whereRaw('LOWER(description) LIKE ?', ['%' . strtolower($request->get('description')) . '%']);
+            }
+
+            // Filtro por data de criação
+            if ($request->has('created_at')) {
+                $createdAt = Carbon::createFromFormat('d/m/Y', $request->get('created_at'))->format('Y-m-d');
+                $query->whereDate('created_at', $createdAt);
+            }
+
+            // Filtro por data de conclusão
+            if ($request->has('completed_at')) {
+                $completedAt = Carbon::createFromFormat('d/m/Y', $request->get('completed_at'))->format('Y-m-d');
+                $query->whereDate('completed_at', $completedAt);
+            }
+
+            // Filtro de tarefas criadas hoje
             if ($request->has('today') && $request->get('today') == 'true') {
                 $query->whereDate('created_at', Carbon::today());
             }
 
+            // Filtro por título
             if ($request->has('title')) {
                 $query->whereRaw('LOWER(title) LIKE ?', ['%' . strtolower($request->get('title')) . '%']);
+            }
+
+            // Filtro de busca geral (no título ou descrição)
+            if ($request->has('search')) {
+                $searchTerm = strtolower($request->get('search'));
+                $query->where(function($q) use ($searchTerm) {
+                    $q->whereRaw('LOWER(title) LIKE ?', ['%' . $searchTerm . '%'])
+                    ->orWhereRaw('LOWER(description) LIKE ?', ['%' . $searchTerm . '%']);
+                });
             }
 
             $tasks = $query->paginate($perPage);
@@ -47,17 +83,20 @@ class TaskController extends Controller
     }
 
     // 2. Criar nova tarefa (POST /tasks)
-    public function store(Request $request)
+    public function store(Request $request, GoogleCalendarService $calendarService)
     {
         $messages = [
             'title.required' => 'O título da tarefa é obrigatório.',
-            'status.in' => 'O status da tarefa deve ser um dos seguintes: A Fazer, Em Progresso, Pausada, Cancelada, Feitas.'
+            'start_date_time.required' => 'A data e hora de início são obrigatórias.',
+            'end_date_time.required' => 'A data e hora de término são obrigatórias.',
+            'end_date_time.after' => 'A data de término deve ser após a data de início.'
         ];
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'in:A Fazer,Em Progresso,Pausada,Cancelada,Feitas'
+            'start_date_time' => 'required|date_format:d/m/Y H:i',
+            'end_date_time' => 'required|date_format:d/m/Y H:i|after:start_date_time',
         ], $messages);
 
         if ($validator->fails()) {
@@ -67,12 +106,28 @@ class TaskController extends Controller
         try {
             $user = auth()->user();
 
+            $startDateTime = Carbon::createFromFormat('d/m/Y H:i', $request->start_date_time, 'America/Sao_Paulo')
+                                ->setTimezone('America/Sao_Paulo'); 
+            $endDateTime = Carbon::createFromFormat('d/m/Y H:i', $request->end_date_time, 'America/Sao_Paulo')
+                                ->setTimezone('America/Sao_Paulo'); 
+
             $task = Task::create([
                 'title' => $request->title,
                 'description' => $request->description,
-                'status' => $request->status ?? 'A Fazer',
-                'user_id' => $user->id
+                'status' => 'A Fazer',
+                'user_id' => $user->id,
+                'start_date_time' => $startDateTime,
+                'end_date_time' => $endDateTime
             ]);
+
+            // Cria o evento no Google Calendar
+            $event = $calendarService->createEvent($task, $startDateTime, $endDateTime);
+
+            // Armazena o ID do evento no Google Calendar
+            $task->google_event_id = $event->id;
+            $task->save();
+
+            dispatch(new SendTaskNotification($user, $task, 'criada'));
 
             return response()->json($task, 201);
         } catch (\Exception $e) {
@@ -99,17 +154,22 @@ class TaskController extends Controller
     }
 
     // 4. Atualizar uma tarefa existente (PUT /tasks/{id})
-    public function update(Request $request, $id)
+    public function update(Request $request, $id, GoogleCalendarService $calendarService)
     {
         $messages = [
             'title.required' => 'O título da tarefa é obrigatório.',
-            'status.in' => 'O status da tarefa deve ser um dos seguintes: A Fazer, Em Progresso, Pausada, Cancelada, Feitas.'
+            'start_date_time.required' => 'A data e hora de início são obrigatórias.',
+            'end_date_time.required' => 'A data e hora de término são obrigatórias.',
+            'end_date_time.after' => 'A data de término deve ser após a data de início.',
+            'status.in' => 'O status da tarefa deve ser um dos seguintes: A Fazer, Feitas.'
         ];
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'in:A Fazer,Em Progresso,Pausada,Cancelada,Feitas'
+            'start_date_time' => 'required|date_format:d/m/Y H:i',
+            'end_date_time' => 'required|date_format:d/m/Y H:i|after:start_date_time',
+            'status' => 'in:A Fazer,Feitas'
         ], $messages);
 
         if ($validator->fails()) {
@@ -124,15 +184,35 @@ class TaskController extends Controller
                 return response()->json(['message' => 'Tarefa não encontrada.'], 404);
             }
 
-            if ($request->status === 'Feitas' && $task->status !== 'Feitas') {
+            $startDateTime = Carbon::createFromFormat('d/m/Y H:i', $request->start_date_time, 'America/Sao_Paulo')
+                                ->setTimezone('America/Sao_Paulo');
+            $endDateTime = Carbon::createFromFormat('d/m/Y H:i', $request->end_date_time, 'America/Sao_Paulo')
+                                ->setTimezone('America/Sao_Paulo');
+
+            if (Carbon::now()->greaterThanOrEqualTo($endDateTime) && $task->status !== 'Feitas') {
                 $task->completed_at = Carbon::now();
+                $task->status = 'Feitas';
+            } elseif ($request->status === 'Feitas' && $task->status !== 'Feitas') {
+                // Caso a tarefa seja marcada como concluída manualmente
+                $task->completed_at = Carbon::now();
+                $task->status = 'Feitas';
+            } else {
+                $task->status = 'A Fazer';
             }
 
             $task->update([
                 'title' => $request->title,
                 'description' => $request->description,
-                'status' => $request->status,
+                'status' => $task->status,
+                'start_date_time' => $startDateTime,
+                'end_date_time' => $endDateTime
             ]);
+
+            if ($task->google_event_id) {
+                $calendarService->updateEvent($task->google_event_id, $task, $startDateTime, $endDateTime);
+            }
+
+            dispatch(new SendTaskNotification($user, $task, 'atualizada'));
 
             return response()->json($task);
         } catch (\Exception $e) {
@@ -141,7 +221,7 @@ class TaskController extends Controller
     }
 
     // 5. Excluir uma tarefa (DELETE /tasks/{id})
-    public function destroy($id)
+    public function destroy($id, GoogleCalendarService $calendarService)
     {
         try {
             $user = auth()->user();
@@ -151,7 +231,12 @@ class TaskController extends Controller
                 return response()->json(['message' => 'Tarefa não encontrada.'], 404);
             }
 
+            if ($task->google_event_id) {
+                $calendarService->deleteEvent($task->google_event_id);
+            }
+
             $task->delete();
+
             return response()->json(['message' => 'Tarefa excluída com sucesso']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Erro ao excluir tarefa: ' . $e->getMessage()], 500);
