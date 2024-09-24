@@ -180,6 +180,7 @@ Para facilitar o teste da API, você pode importar a **Postman Collection** incl
 1.  Abra o **Postman**.
 2.  Clique em **Import** e selecione o arquivo da [coleção do postman](postman/api-to-do-collection.json) no diretório do projeto.
 3.  Configure o ambiente no Postman, criando variáveis para o **token JWT**.
+4.  API URL: Ao subir o ambiente Docker, use http://localhost:8080 como o endpoint base da API no Postman.
 
 ## Executando Jobs de Fila
 
