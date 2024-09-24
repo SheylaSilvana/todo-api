@@ -1,0 +1,875 @@
+{
+	"info": {
+		"_postman_id": "6b44a3fd-ded3-466f-9b67-1fdcb68345ad",
+		"name": "To-Do List API - Gestão de Tarefas",
+		"description": "### **Descrição da Coleção:**\n\nEsta API foi desenvolvida para gerenciar tarefas (To-Do List) e autenticação de usuários, utilizando Lumen (PHP) e PostgreSQL. A autenticação é realizada via JWT, e a API oferece funcionalidades de gerenciamento de tarefas, integração com o Google Calendar, e envio de e-mails automáticos configurados com o SMTP do Gmail. As credenciais de e-mail e outros parâmetros importantes são configurados dinamicamente através de variáveis de ambiente.\n\n### **Funcionalidades Principais:**\n\n- **Autenticação de Usuários**: Registro, login, logout e recuperação de informações do usuário autenticado, utilizando tokens JWT.\n    \n- **Gestão de Tarefas**: Criar, listar, atualizar e excluir tarefas, com suporte a filtros por status, intervalo de datas, e integração com o Google Calendar para criação, atualização e exclusão de eventos.\n    \n- **Gestão de Usuários**: Listar, atualizar e excluir usuários, além de redefinir senhas, com envio automático de e-mails para os usuários.\n    \n- **Integração com Google Calendar**: Eventos são criados, atualizados e removidos no Google Calendar ao realizar ações nas tarefas correspondentes.\n    \n- **Envio de E-mails Automáticos**: Configurado com variáveis de ambiente para enviar e-mails por SMTP (Gmail), com suporte para envio de senha no registro e redefinição de senha.\n    \n\n### **Fluxo de Uso:**\n\n#### **Registro e Login:**\n\n- **Registro**: Ao registrar um novo usuário, um e-mail contendo a senha gerada automaticamente é enviado. O e-mail remetente é configurado via variável de ambiente (`MAIL_USERNAME`).\n    \n- **Login**: Após o login, um token JWT é retornado, que será utilizado nas requisições subsequentes para rotas autenticadas.\n    \n- **Logout**: A API permite que o usuário encerre a sessão, invalidando o token JWT.\n    \n\n#### **Gestão de Tarefas:**\n\n- **Criar, Listar, Atualizar e Excluir Tarefas**: Os usuários autenticados podem gerenciar suas tarefas, aplicando filtros por status, intervalos de datas, e buscando tarefas recentes.\n    \n- **Integração com Google Calendar**: Sempre que uma tarefa é criada, atualizada ou excluída, o evento correspondente é sincronizado no Google Calendar.\n    \n\n#### **Gestão de Usuários:**\n\n- **Listagem, Atualização e Exclusão**: Os usuários podem visualizar, atualizar e excluir seus próprios perfis.\n    \n- **Redefinição de Senha**: Uma nova senha pode ser gerada e enviada automaticamente para o e-mail do usuário ao redefinir sua senha.\n    \n\n### **Envio de E-mails:**\n\n- **Registro**: Ao registrar um novo usuário, um e-mail contendo a senha gerada é enviado automaticamente.\n    \n- **Redefinição de Senha**: Quando a senha é redefinida, um e-mail contendo uma nova senha é enviado automaticamente ao usuário.\n    \n- **Configuração**: O envio de e-mails é configurado via variáveis de ambiente, com suporte a Gmail (ou qualquer serviço SMTP configurado).\n    \n\n### **Instruções para Autenticação:**\n\n- A autenticação é realizada via JWT.\n    \n- **Passo 1**: O usuário deve fazer o login e obter o token JWT.\n    \n- O token JWT deve ser incluído no cabeçalho `Authorization` das requisições autenticadas.\n    \n\n### **Estrutura da API:**\n\n- **Autenticação**: Registro, login, logout e recuperação de informações do usuário autenticado.\n    \n- **Tarefas**: CRUD de tarefas, com filtros por status, intervalo de datas, integração com o Google Calendar para sincronização de eventos.\n    \n- **Usuários**: Listagem, atualização, exclusão e redefinição de senha com envio automático de e-mails.\n    \n- **E-mails**: Envio automatizado de e-mails para registro de novos usuários e redefinição de senha.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25046623"
+	},
+	"item": [
+		{
+			"name": "Registrar Novo Usuário",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var template = `\r",
+							"<canvas id=\"myChart\" height=\"75\"></canvas>\r",
+							"\r",
+							"<script src=\"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js\"></script> \r",
+							"\r",
+							"<script>\r",
+							"    var ctx = document.getElementById(\"myChart\");\r",
+							"\r",
+							"    var myChart = new Chart(ctx, {\r",
+							"        type: \"pie\",\r",
+							"        data: {\r",
+							"            labels: [\"Name\", \"Email\", \"Updated At\", \"Created At\", \"ID\", \"Token\"],\r",
+							"            datasets: [{\r",
+							"                data: [],\r",
+							"                backgroundColor: [\"#003f5c\", \"#58508d\", \"#bc5090\", \"#ff6361\", \"#ffa600\", \"#ff7c43\"],\r",
+							"            }]\r",
+							"        },\r",
+							"        options: {\r",
+							"            title: {\r",
+							"                display: true,\r",
+							"                text: 'User Information'\r",
+							"            }\r",
+							"        }\r",
+							"\r",
+							"    });\r",
+							"\r",
+							"    pm.getData(function (err, value) {\r",
+							"        var user = value.response.user;\r",
+							"        var userData = [\r",
+							"            user.name,\r",
+							"            user.email,\r",
+							"            user.updated_at,\r",
+							"            user.created_at,\r",
+							"            user.id,\r",
+							"            value.response.token\r",
+							"        ];\r",
+							"        myChart.data.datasets[0].data = userData;\r",
+							"        myChart.update();\r",
+							"    });\r",
+							"\r",
+							"</script>`;\r",
+							"\r",
+							"function constructVisualizerPayload() {\r",
+							"    var res = pm.response.json();\r",
+							"    \r",
+							"    var visualizerData = {\r",
+							"        user: res.user,\r",
+							"        token: res.token\r",
+							"    };\r",
+							"\r",
+							"    return {response: visualizerData};\r",
+							"}\r",
+							"\r",
+							"pm.visualizer.set(template, constructVisualizerPayload());\r",
+							"\r",
+							"pm.test(\"Response status code is 201\", function () {\r",
+							"  pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response time is less than 500ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(500);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Response contains the required fields\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"    \r",
+							"    pm.expect(responseData).to.be.an('object');\r",
+							"    pm.expect(responseData.user).to.be.an('object');\r",
+							"    pm.expect(responseData.user.name).to.exist;\r",
+							"    pm.expect(responseData.user.email).to.exist;\r",
+							"    pm.expect(responseData.user.updated_at).to.exist;\r",
+							"    pm.expect(responseData.user.created_at).to.exist;\r",
+							"    pm.expect(responseData.user.id).to.exist;\r",
+							"    pm.expect(responseData.token).to.exist;\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Name, email, updated_at, and created_at are in a valid date or datetime format\", function () {\r",
+							"    const responseData = pm.response.json();\r",
+							"\r",
+							"    pm.expect(responseData).to.be.an('object');\r",
+							"    \r",
+							"    const dateRegex = /^\\d{4}-\\d{2}-\\d{2}$/; // YYYY-MM-DD format\r",
+							"    \r",
+							"    if (responseData.user) {\r",
+							"        pm.expect(responseData.user.name).to.match(dateRegex, \"Name should be in valid date format\");\r",
+							"        pm.expect(responseData.user.email).to.match(dateRegex, \"Email should be in valid date format\");\r",
+							"        pm.expect(responseData.user.updated_at).to.match(dateRegex, \"Updated_at should be in valid date format\");\r",
+							"        pm.expect(responseData.user.created_at).to.match(dateRegex, \"Created_at should be in valid date format\");\r",
+							"    }\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"ID is a non-negative integer\", function () {\r",
+							"  const responseData = pm.response.json();\r",
+							"  \r",
+							"  pm.expect(responseData.user.id).to.be.a('number').and.to.be.at.least(0);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});\r",
+							"\r",
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"// Verifica se a resposta contém o token\r",
+							"if (jsonData.token) {\r",
+							"    // Armazena o token JWT em uma variável de ambiente chamada 'jwt_token'\r",
+							"    pm.environment.set(\"jwt_token\", jsonData.token);\r",
+							"}\r",
+							"pm.test(\"Response time is less than 200ms\", function () {\r",
+							"  pm.expect(pm.response.responseTime).to.be.below(200);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"followAuthorizationHeader": false
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Nome do Usuário\",\r\n  \"email\": \"email@exemplo.com\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/register",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"register"
+					]
+				},
+				"description": "### **Descrição**:\n\nEsta rota permite o registro de novos usuários. O usuário deverá fornecer um nome e um e-mail. Uma senha será gerada automaticamente e enviada para o e-mail fornecido. O usuário também receberá um token JWT para autenticação.\n\n#### **Parâmetros de Entrada:**\n\n- **name** (string, obrigatório):\n    \n    - Descrição: O nome do usuário que está se registrando.\n        \n    - Validações: Obrigatório, string, máximo de 255 caracteres.\n        \n- **email** (string, obrigatório):\n    \n    - Descrição: O endereço de e-mail do usuário. Este e-mail será utilizado para o envio da senha.\n        \n    - Validações: Obrigatório, formato de e-mail válido, único (não pode já estar em uso por outro usuário), máximo de 255 caracteres.\n        \n\n#### Notas:\n\n- Ao registrar um novo usuário, a senha gerada será enviada por e-mail. Certifique-se de que o serviço de envio de e-mails esteja configurado corretamente.\n    \n- O token JWT retornado pode ser utilizado para autenticar o usuário nas próximas requisições."
+			},
+			"response": []
+		},
+		{
+			"name": "Login de Usuário",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"// Verifica se a resposta contém o token\r",
+							"if (jsonData.token) {\r",
+							"    // Armazena o token JWT em uma variável de ambiente chamada 'jwt_token'\r",
+							"    pm.environment.set(\"jwt_token\", jsonData.token);\r",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"email@exemplo.com\",\r\n  \"password\": \"senhaSegura123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/login",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"login"
+					]
+				},
+				"description": "### **Descrição**:\n\nEste endpoint permite que o usuário faça login no sistema utilizando suas credenciais (e-mail e senha). Após o login bem-sucedido, um token JWT será retornado, que poderá ser usado para autenticação em outros endpoints.\n\n#### Parâmetros de Entrada:\n\n- **`email`** (obrigatório):\n    \n    - **Tipo**: `string`\n        \n    - **Descrição**: O e-mail do usuário registrado.\n        \n    - **Validação**: Deve ser um e-mail válido.\n        \n    - **Mensagem de Erro**: `\"O e-mail é obrigatório.\"`\n        \n- **`password`** (obrigatório):\n    \n    - **Tipo**: `string`\n        \n    - **Descrição**: A senha do usuário, fornecida durante o registro ou redefinição de senha.\n        \n    - **Validação**: Deve conter no mínimo 6 caracteres.\n        \n    - **Mensagem de Erro**: `\"A senha é obrigatória.\"`"
+			},
+			"response": []
+		},
+		{
+			"name": "Redefinir Senha do Usuário",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"// Verifica se a resposta contém o token\r",
+							"if (jsonData.token) {\r",
+							"    // Armazena o token JWT em uma variável de ambiente chamada 'jwt_token'\r",
+							"    pm.environment.set(\"jwt_token\", jsonData.token);\r",
+							"}"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/users/{id}/reset-password",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"{id}",
+						"reset-password"
+					]
+				},
+				"description": "### **Descrição**:\n\nEsse endpoint permite a redefinição da senha de um usuário específico. A nova senha é gerada automaticamente e enviada para o e-mail associado ao usuário. O token JWT anterior do usuário é invalidado, forçando o uso da nova senha para login subsequente.\n\n#### Parâmetros de Entrada:\n\n- **`id`** (obrigatório):\n    \n    - **Tipo**: `integer`\n        \n    - **Descrição**: O ID do usuário cuja senha será redefinida.\n        \n    - **Validação**: O ID deve existir no banco de dados, caso contrário, será retornado um erro.\n        \n\n#### Corpo da Requisição:\n\nNenhum dado adicional é necessário no corpo da requisição."
+			},
+			"response": []
+		},
+		{
+			"name": "Obter Usuário Autenticado",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/me",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"me"
+					]
+				},
+				"description": "### **Descrição**:\n\nEsse endpoint retorna as informações do usuário autenticado com base no token JWT fornecido na requisição. É utilizado para verificar os dados do usuário atualmente logado no sistema.\n\n#### Parâmetros de Entrada:\n\n- Não há parâmetros no corpo da requisição, mas o **token JWT** deve ser incluído no cabeçalho."
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Todos os Usuários com Paginação",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/users",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"users"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite listar todos os usuários cadastrados no sistema com suporte à paginação. O cliente pode definir o número de usuários retornados por página através de um parâmetro opcional. A resposta inclui informações sobre a paginação, como o total de registros e o número de páginas.\n\n#### **Parâmetros de Entrada:**\n\n- **per_page** (int, opcional):\n    \n    - **Descrição:** Define o número de usuários a serem exibidos por página.\n        \n    - **Validações:** Inteiro positivo, valor padrão é 10.\n        \n    - **Exemplo:** `per_page=20`\n        \n\n#### **Notas:**\n\n- O parâmetro `per_page` é opcional e, se omitido, retornará 10 usuários por página por padrão.\n    \n- A paginação facilita a navegação entre diferentes conjuntos de usuários, fornecendo informações como a página atual, total de páginas e o número de usuários por página.\n    \n- Em caso de erro, será retornada uma mensagem com detalhes do problema ocorrido no servidor."
+			},
+			"response": []
+		},
+		{
+			"name": "Exibir Detalhes de um Usuário Específico",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/users/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite obter os detalhes de um usuário específico com base no seu ID. A resposta inclui todas as informações relacionadas ao usuário identificado.\n\n#### **Parâmetros de Entrada:**\n\n- **id** (int, obrigatório):\n    \n    - **Descrição:** O ID do usuário que você deseja buscar.\n        \n    - **Validações:** Obrigatório, inteiro, deve corresponder a um usuário existente no sistema.\n        \n    - **Exemplo:** `id=2`\n        \n\n#### **Notas:**\n\n- O ID do usuário deve existir no banco de dados. Caso contrário, será retornada uma mensagem de erro com o código de status 404.\n    \n- Se ocorrer um erro no servidor durante a busca, a resposta incluirá uma mensagem detalhando o problema."
+			},
+			"response": []
+		},
+		{
+			"name": "Atualizar um Usuário Existente",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Novo Nome 2\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/users/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite atualizar o nome de um usuário existente com base no seu ID. O usuário deve fornecer um novo nome que será atualizado no banco de dados.\n\n#### **Parâmetros de Entrada:**\n\n- **id** (int, obrigatório):\n    \n    - **Descrição:** O ID do usuário que você deseja atualizar.\n        \n    - **Validações:** Obrigatório, inteiro, deve corresponder a um usuário existente no sistema.\n        \n    - **Exemplo:** `id=1`\n        \n- **name** (string, obrigatório):\n    \n    - **Descrição:** O novo nome do usuário que será atualizado.\n        \n    - **Validações:** Obrigatório, string, máximo de 255 caracteres.\n        \n    - **Mensagem de erro personalizada:** \"O nome é obrigatório.\"\n        \n    - **Exemplo:** `\"name\": \"John Doe Updated\"`\n        \n\n#### **Notas:**\n\n- Apenas o nome do usuário pode ser atualizado através deste endpoint.\n    \n- O ID fornecido deve corresponder a um usuário existente no banco de dados.\n    \n- Se a validação falhar, uma mensagem de erro personalizada será retornada informando que o nome é obrigatório.\n    \n- Em caso de erro no servidor, uma mensagem de erro detalhando o problema será retornada."
+			},
+			"response": []
+		},
+		{
+			"name": "Excluir um Usuário",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/users/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"users",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite excluir um usuário específico do sistema com base no seu ID. Após a exclusão, o usuário não estará mais disponível no banco de dados.\n\n#### **Parâmetros de Entrada:**\n\n- **id** (int, obrigatório):\n    \n    - **Descrição:** O ID do usuário que você deseja excluir.\n        \n    - **Validações:** Obrigatório, inteiro, deve corresponder a um usuário existente no sistema.\n        \n    - **Exemplo:** `id=1`\n        \n\n#### **Notas:**\n\n- O ID fornecido deve corresponder a um usuário existente no banco de dados.\n    \n- Uma vez excluído, o usuário não poderá ser recuperado, exceto por mecanismos de backup, se houver.\n    \n- Se ocorrer algum erro durante a exclusão, uma mensagem de erro será retornada explicando o problema."
+			},
+			"response": []
+		},
+		{
+			"name": "Criar Nova Tarefa",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Minha Nova Tarefa\",\r\n  \"description\": \"Descrição da nova tarefa\",\r\n  \"start_date_time\": \"25/09/2024 14:00\",\r\n  \"end_date_time\": \"25/09/2024 16:00\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite criar uma nova tarefa associada ao usuário autenticado. O usuário deve fornecer o título, a descrição (opcional) e os horários de início e término da tarefa. A tarefa será automaticamente sincronizada com o Google Calendar.\n\n#### **Parâmetros de Entrada:**\n\n- **title** (string, obrigatório):\n    \n    - **Descrição:** O título da tarefa.\n        \n    - **Validações:** Obrigatório, string, máximo de 255 caracteres.\n        \n    - **Mensagem de erro personalizada:** \"O título da tarefa é obrigatório.\"\n        \n    - **Exemplo:** `\"title\": \"Minha Nova Tarefa\"`\n        \n- **description** (string, opcional):\n    \n    - **Descrição:** A descrição detalhada da tarefa.\n        \n    - **Validações:** Opcional, string.\n        \n    - **Exemplo:** `\"description\": \"Detalhes da tarefa\"`\n        \n- **start_date_time** (string, obrigatório):\n    \n    - **Descrição:** Data e hora de início da tarefa.\n        \n    - **Validações:** Obrigatório, formato de data e hora `d/m/Y H:i`.\n        \n    - **Mensagem de erro personalizada:** \"A data e hora de início são obrigatórias.\"\n        \n    - **Exemplo:** `\"start_date_time\": \"25/09/2024 14:00\"`\n        \n- **end_date_time** (string, obrigatório):\n    \n    - **Descrição:** Data e hora de término da tarefa. Deve ser posterior à data e hora de início.\n        \n    - **Validações:** Obrigatório, formato de data e hora `d/m/Y H:i`, deve ser após `start_date_time`.\n        \n    - **Mensagem de erro personalizada:** \"A data de término deve ser após a data de início.\"\n        \n    - **Exemplo:** `\"end_date_time\": \"25/09/2024 16:00\"`\n        \n\n#### **Notas:**\n\n- A tarefa será automaticamente sincronizada com o Google Calendar após a criação.\n    \n- O campo `description` é opcional.\n    \n- A data e hora de término devem ser posteriores à data e hora de início."
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Todas as Tarefas com Paginação e Filtros",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks"
+					],
+					"query": [
+						{
+							"key": "statuses",
+							"value": "A Fazer,Feitas",
+							"disabled": true
+						},
+						{
+							"key": "title",
+							"value": "trabalho",
+							"disabled": true
+						},
+						{
+							"key": "status",
+							"value": "A Fazer",
+							"disabled": true
+						},
+						{
+							"key": "description",
+							"value": "importante",
+							"disabled": true
+						},
+						{
+							"key": "created_at",
+							"value": "24/09/2024",
+							"disabled": true
+						},
+						{
+							"key": "completed_at",
+							"value": "25/09/2023",
+							"disabled": true
+						},
+						{
+							"key": "today",
+							"value": "true",
+							"disabled": true
+						},
+						{
+							"key": "search",
+							"value": "importante",
+							"disabled": true
+						}
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite listar todas as tarefas associadas ao usuário autenticado com suporte à paginação e aplicação de filtros opcionais. O usuário pode filtrar as tarefas por status, título, descrição, data de criação, data de conclusão, entre outros critérios.\n\n#### **Parâmetros de Entrada:**\n\n#### Query Parameters (opcionais):\n\n- **per_page** (int, opcional):\n    \n    - **Descrição:** Define o número de tarefas por página. Valor padrão é 10.\n        \n    - **Exemplo:** `per_page=20`\n        \n- **status** (string, opcional):\n    \n    - **Descrição:** Filtro de status para a tarefa. Exemplo: \"A Fazer\", \"Em Progresso\", \"Concluída\".\n        \n    - **Exemplo:** `status=A Fazer`\n        \n- **statuses** (string, opcional):\n    \n    - **Descrição:** Filtra por múltiplos status, separados por vírgula.\n        \n    - **Exemplo:** `statuses=A Fazer,Concluída`\n        \n- **title** (string, opcional):\n    \n    - **Descrição:** Filtra as tarefas que contêm o título especificado (não sensível a maiúsculas e minúsculas).\n        \n    - **Exemplo:** `title=Minha Tarefa`\n        \n- **description** (string, opcional):\n    \n    - **Descrição:** Filtra as tarefas que contêm a descrição especificada (não sensível a maiúsculas e minúsculas).\n        \n    - **Exemplo:** `description=detalhes`\n        \n- **created_at** (string, opcional):\n    \n    - **Descrição:** Filtra as tarefas pela data de criação, no formato `d/m/Y`.\n        \n    - **Exemplo:** `created_at=24/09/2024`\n        \n- **completed_at** (string, opcional):\n    \n    - **Descrição:** Filtra as tarefas pela data de conclusão, no formato `d/m/Y`.\n        \n    - **Exemplo:** `completed_at=24/09/2024`\n        \n- **today** (string, opcional):\n    \n    - **Descrição:** Filtra as tarefas criadas hoje. Deve ser igual a `true`.\n        \n    - **Exemplo:** `today=true`\n        \n- **search** (string, opcional):\n    \n    - **Descrição:** Busca geral nas tarefas, filtrando pelo título ou pela descrição.\n        \n    - **Exemplo:** `search=projeto`\n        \n\n#### **Notas:**\n\n- O parâmetro `per_page` é opcional. Caso não seja informado, o valor padrão será 10.\n    \n- Vários filtros podem ser combinados para refinar os resultados.\n    \n- As datas de criação e conclusão serão retornadas no formato `d/m/Y`.\n    \n- O filtro de busca geral (`search`) procura tanto no título quanto na descrição da tarefa."
+			},
+			"response": []
+		},
+		{
+			"name": "Exibir uma Tarefa Específica",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite exibir os detalhes de uma tarefa específica com base no seu ID, desde que a tarefa pertença ao usuário autenticado.\n\n#### **Parâmetros de Entrada:**\n\n- **id** (int, obrigatório):\n    \n    - **Descrição:** O ID da tarefa que deseja exibir.\n        \n    - **Validações:** Obrigatório, inteiro, deve corresponder a uma tarefa existente pertencente ao usuário autenticado.\n        \n    - **Exemplo:** `id=1`\n        \n\n#### **Notas:**\n\n- O ID fornecido deve corresponder a uma tarefa existente pertencente ao usuário autenticado.\n    \n- Se a tarefa não for encontrada ou não pertencer ao usuário, será retornada uma mensagem de erro com o código de status 404."
+			},
+			"response": []
+		},
+		{
+			"name": "Contar o Número de Tarefas por Status",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/status-count",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"status-count"
+					]
+				},
+				"description": "### **Descrição:**\n\nEste endpoint retorna a contagem de tarefas do usuário autenticado, agrupadas por status. É útil para visualizar quantas tarefas estão em cada status, como \"A Fazer\" e \"Feitas\".\n\n#### **Parâmetros de Entrada:**\n\nEste endpoint não possui parâmetros de entrada.\n\n#### **Notas:**\n\n- O usuário deve estar autenticado para acessar este endpoint, pois a contagem de tarefas é específica para o usuário.\n    \n- Se não houver tarefas cadastradas para o usuário, uma mensagem com o código de status 404 será retornada.\n    \n- A resposta agrupa as tarefas por status e fornece a contagem total de tarefas em cada um dos status."
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Tarefas Recentes (Últimos 7 Dias)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/recent",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"recent"
+					]
+				},
+				"description": "### **Descrição:**\n\nEsta rota permite buscar todas as tarefas criadas nos últimos 7 dias pelo usuário autenticado. As tarefas serão retornadas com todos os seus detalhes.\n\n#### **Parâmetros de Entrada:**\n\nEste endpoint não possui parâmetros de entrada.\n\n#### **Notas:**\n\n- Apenas tarefas criadas nos últimos 7 dias serão retornadas.\n    \n- O usuário deve estar autenticado para acessar este endpoint.\n    \n- Se não houver tarefas recentes, uma mensagem de erro com o código de status 404 será retornada."
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Tarefas com Informações dos Usuários",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/with-users",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"with-users"
+					]
+				},
+				"description": "### **Descrição:**\n\nEste endpoint retorna uma lista de tarefas, incluindo as informações dos usuários associados a essas tarefas (nome e e-mail). A busca é limitada às tarefas pertencentes ao usuário autenticado.\n\n### **Parâmetros de Entrada:**\n\nEste endpoint não possui parâmetros de entrada.\n\n### **Notas:**\n\n- Este endpoint retorna as informações das tarefas do usuário autenticado, incluindo o nome e o e-mail do usuário.\n    \n- Se não forem encontradas tarefas, uma mensagem de erro com o código de status 404 será retornada."
+			},
+			"response": []
+		},
+		{
+			"name": "Buscar Tarefas Criadas em um Intervalo de Datas",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/date-range",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"date-range"
+					],
+					"query": [
+						{
+							"key": "start_date",
+							"value": "2024-09-25",
+							"disabled": true
+						},
+						{
+							"key": "end_date",
+							"value": "2024-09-25",
+							"disabled": true
+						}
+					]
+				},
+				"description": "#### **Descrição:**\n\nEste endpoint retorna todas as tarefas criadas pelo usuário autenticado dentro de um intervalo de datas especificado. O intervalo de datas é passado como parâmetros de consulta (`start_date` e `end_date`). Se apenas uma das datas for fornecida, as tarefas serão filtradas a partir dessa data. Se o intervalo de datas incluir a mesma data para início e fim, as tarefas daquele dia específico serão retornadas.\n\n**Parâmetros de Entrada:**\n\n- **start_date** (string, opcional):\n    \n    - **Descrição:** Data de início do intervalo no formato `d/m/Y`. Se não for informado, serão consideradas todas as tarefas até a data de fim.\n        \n    - **Exemplo:** `start_date=25/09/2023`\n        \n- **end_date** (string, opcional):\n    \n    - **Descrição:** Data de fim do intervalo no formato `d/m/Y`. Se não for informado, serão consideradas todas as tarefas desde a data de início.\n        \n    - **Exemplo:** `end_date=30/09/2023`\n        \n\n#### **Notas:**\n\n- O intervalo de datas pode incluir uma única data ou um intervalo maior. Se ambas as datas forem iguais, as tarefas daquele dia específico serão retornadas.\n    \n- O formato de datas aceito é `d/m/Y`. Certifique-se de passar as datas no formato correto.\n    \n- Pelo menos uma das datas (`start_date` ou `end_date`) deve ser fornecida."
+			},
+			"response": []
+		},
+		{
+			"name": "Atualizar uma Tarefa Existente",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"title\": \"Tarefa Atualizada\",\r\n  \"description\": \"Descrição atualizada\",\r\n  \"start_date_time\": \"25/09/2023 14:00\",\r\n  \"end_date_time\": \"25/09/2023 16:00\",\r\n  \"status\": \"Feitas\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEste endpoint permite que o usuário autenticado atualize uma tarefa existente com base no ID fornecido. A atualização pode incluir o título, a descrição, o status, e as datas de início e término. O status da tarefa pode ser marcado como \"Feitas\" ou \"A Fazer\", e as tarefas que forem concluídas podem ser atualizadas automaticamente no Google Calendar (se integradas).\n\n#### **Parâmetros de Entrada:**\n\n- **title** (string, obrigatório):\n    \n    - **Descrição:** O novo título da tarefa.\n        \n    - **Validações:** Obrigatório, string, máximo de 255 caracteres.\n        \n    - **Exemplo:** `\"title\": \"Tarefa Atualizada\"`\n        \n- **description** (string, opcional):\n    \n    - **Descrição:** A nova descrição da tarefa.\n        \n    - **Validações:** Opcional, string.\n        \n    - **Exemplo:** `\"description\": \"Descrição atualizada\"`\n        \n- **start_date_time** (string, obrigatório):\n    \n    - **Descrição:** A nova data e hora de início da tarefa no formato `d/m/Y H:i`.\n        \n    - **Validações:** Obrigatório, formato de data e hora `d/m/Y H:i`.\n        \n    - **Exemplo:** `\"start_date_time\": \"25/09/2023 14:00\"`\n        \n- **end_date_time** (string, obrigatório):\n    \n    - **Descrição:** A nova data e hora de término da tarefa no formato `d/m/Y H:i`.\n        \n    - **Validações:** Obrigatório, formato de data e hora `d/m/Y H:i`, deve ser posterior à data de início.\n        \n    - **Exemplo:** `\"end_date_time\": \"25/09/2023 16:00\"`\n        \n- **status** (string, opcional):\n    \n    - **Descrição:** O novo status da tarefa.\n        \n    - **Validações:** Deve ser \"A Fazer\" ou \"Feitas\".\n        \n    - **Exemplo:** `\"status\": \"Feitas\"`"
+			},
+			"response": []
+		},
+		{
+			"name": "Excluir uma Tarefa",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/tasks/{id}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"tasks",
+						"{id}"
+					]
+				},
+				"description": "### **Descrição:**\n\nEste endpoint permite que o usuário autenticado exclua uma tarefa específica com base no seu ID. Se a tarefa estiver vinculada a um evento no Google Calendar, o evento será excluído automaticamente antes da exclusão da tarefa.\n\n### **Parâmetros de Entrada:**\n\n- **id** (int, obrigatório):\n    \n    - **Descrição:** O ID da tarefa que você deseja excluir.\n        \n    - **Validações:** Obrigatório, inteiro, deve corresponder a uma tarefa existente e pertencente ao usuário autenticado.\n        \n    - **Exemplo:** `id=2`\n        \n\n#### **Notas:**\n\n- Se a tarefa estiver vinculada a um evento no Google Calendar, o evento será excluído automaticamente ao excluir a tarefa.\n    \n- O usuário deve estar autenticado para realizar a exclusão da tarefa."
+			},
+			"response": []
+		},
+		{
+			"name": "Logout do Usuário",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{jwt_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/api/v1/logout",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"api",
+						"v1",
+						"logout"
+					]
+				},
+				"description": "### **Descrição:**\n\nEste endpoint permite que o usuário autenticado faça o logout do sistema. A sessão ou token JWT será invalidado após o logout, impedindo novas requisições autenticadas até que o usuário faça login novamente.\n\n#### **Parâmetros de Entrada:**\n\nEste endpoint não requer parâmetros de entrada.\n\n#### **Notas:**\n\n- O usuário deve estar autenticado para realizar o logout.\n    \n- Após o logout, o token JWT será invalidado, o que impede o usuário de realizar novas requisições sem se autenticar novamente."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
